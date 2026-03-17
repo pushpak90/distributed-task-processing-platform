@@ -1,13 +1,9 @@
-package com.pushpak.taskplatform.api.model;
+package com.pushpak.taskplatform.worker.model;
 
 import java.time.LocalDateTime;
 
-import com.pushpak.taskplatform.api.enums.TaskStatus;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,27 +14,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tasks")
+@Table(name = "task_execution_logs")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Task {
+public class TaskExecutionLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String taskType;
-    
-    @Column(columnDefinition = "TEXT")
-    private String payload;
-
-    @Enumerated(EnumType.STRING)
-    private TaskStatus status;
-
-    private int retryCount;
-
-    private LocalDateTime createAt;
-
-    private LocalDateTime processedAt;
+    private Long taskId;
+    private int attempt;
+    private String status;
+    private LocalDateTime startedAt;
+    private LocalDateTime finishedAt;
+    @Column(columnDefinition = "Text")
+    private String errorMessage;
 }

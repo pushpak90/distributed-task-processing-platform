@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component;
 
 import com.pushpak.taskplatform.worker.model.Task;
 import com.pushpak.taskplatform.worker.repository.TaskRepository;
+import com.pushpak.taskplatform.worker.service.TaskExecutionLogService;
+import com.pushpak.taskplatform.worker.service.TaskProcessor;
+import com.pushpak.taskplatform.worker.service.TaskProcessorFactory;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,25 +19,68 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class TaskConsumer {
     private final TaskRepository taskRepository;
+    private final TaskProcessorFactory taskProcessorFactory;
+    private final TaskExecutionLogService taskExecutionLogService;
 
     @RabbitListener(queues = "task_queue")
-    public void processTask(Long taskId){
-        log.info("Recevied taskId from queue : {}", taskId);
-        Task task = taskRepository.findById(taskId).orElseThrow(() -> new RuntimeException("Task Not Found"));
-        log.info("Processing task {}", task.getId());
+    public void processTask(Long taskId) {
 
-        try{
-            Thread.sleep(3000);
+        log.info("Received taskId from queue: {}", taskId);
+
+        Task task = taskRepository.findById(taskId).orElse(null);
+
+        if (task == null) {
+            log.warn("Task {} not found in DB. Skipping message.", taskId);
+            return;
         }
-        catch(InterruptedException e){
-            Thread.currentThread().interrupt();
+
+        if ("COMPLETED".equals(task.getStatus())) {
+            log.info("Task already completed. Skipping {}", taskId);
+            return;
         }
 
-        task.setStatus("COMPLETED");
-        task.setProcessedAt(LocalDateTime.now());
+        // START EXECUTION LOG
+        var logEntry = taskExecutionLogService.startLog(task);
 
-        taskRepository.save(task);
+        try {
 
-        log.info("Task Completed : {}", task.getId());
+            log.info("Processing task {}", taskId);
+
+            task.setStatus("PROCESSING");
+            taskRepository.save(task);
+
+            TaskProcessor processor = taskProcessorFactory.getProcessor(task.getTaskType());
+
+            processor.process(task);
+
+            task.setStatus("COMPLETED");
+            task.setProcessedAt(LocalDateTime.now());
+            taskRepository.save(task);
+
+            // SUCCESS LOG
+            taskExecutionLogService.success(logEntry);
+
+            log.info("Task completed {}", taskId);
+
+        } catch (Exception e) {
+
+            log.error("Task processing failed {}", taskId);
+
+            // FAILURE LOG
+            taskExecutionLogService.failure(logEntry, e.getMessage());
+
+            task.setRetryCount(task.getRetryCount() + 1);
+
+            if (task.getRetryCount() >= 3) {
+                task.setStatus("FAILED");
+                taskRepository.save(task);
+                log.error("Task moved to FAILED state {}", taskId);
+                return;
+            }
+
+            taskRepository.save(task);
+
+            throw new RuntimeException("Retry task", e);
+        }
     }
 }

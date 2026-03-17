@@ -1,7 +1,10 @@
 package com.pushpak.taskplatform.api.service.serviceImpl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.pushpak.taskplatform.api.dto.CreateTaskRequest;
@@ -27,13 +30,33 @@ public class TaskServiceImpl implements TaskService{
         Task task = Task.builder()
                     .taskType(request.getTaskType())
                     .payload(request.getPayload())
-                    .status(TaskStatus.PENDING.name())
+                    .status(TaskStatus.PENDING)
                     .retryCount(0)
                     .createAt(LocalDateTime.now())
                     .build();
         Task savedTask = taskRepository.save(task);
         taskProducer.sendTask(savedTask.getId());
         return savedTask;
+    }
+
+    @Override
+    public Task getTaskById(Long id) {
+        return taskRepository.findById(id).orElseThrow(() -> new RuntimeException("Task Not Found By ID : " + id));
+    }
+
+    @Override
+    public List<Task> getAllTask() {
+        return taskRepository.findAll();
+    }
+
+    @Override
+    public List<Task> findByStatus(String status) {
+        return taskRepository.findByStatus(status);
+    }
+
+    @Override
+    public Page<Task> getTasks(int page, int size) {
+        return taskRepository.findAll(PageRequest.of(page, size));
     }
     
 }
