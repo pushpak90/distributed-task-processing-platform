@@ -2,8 +2,12 @@ package com.pushpak.taskplatform.worker.model;
 
 import java.time.LocalDateTime;
 
+import com.pushpak.taskplatform.worker.enums.TaskStatus;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,8 +33,10 @@ public class Task {
     @Column(columnDefinition = "TEXT")
     private String payload;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private TaskStatus status;
 
+    @Column(name = "retry_count")
     private int retryCount;
 
     private LocalDateTime createAt;

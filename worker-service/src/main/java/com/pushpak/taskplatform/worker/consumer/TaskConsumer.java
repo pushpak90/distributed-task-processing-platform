@@ -3,8 +3,10 @@ package com.pushpak.taskplatform.worker.consumer;
 import java.time.LocalDateTime;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
+import com.pushpak.taskplatform.worker.enums.TaskStatus;
 import com.pushpak.taskplatform.worker.model.Task;
 import com.pushpak.taskplatform.worker.repository.TaskRepository;
 import com.pushpak.taskplatform.worker.service.TaskExecutionLogService;
@@ -18,9 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class TaskConsumer {
+
     private final TaskRepository taskRepository;
     private final TaskProcessorFactory taskProcessorFactory;
     private final TaskExecutionLogService taskExecutionLogService;
+    private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = "task_queue")
     public void processTask(Long taskId) {
@@ -34,53 +38,58 @@ public class TaskConsumer {
             return;
         }
 
-        if ("COMPLETED".equals(task.getStatus())) {
-            log.info("Task already completed. Skipping {}", taskId);
+        int updated = taskRepository.markAsProcessingIfPending(
+                taskId,
+                TaskStatus.PENDING,
+                TaskStatus.PROCESSING);
+
+        if (updated == 0) {
+            log.warn("Task {} already processed or picked by another worker. Skipping.", taskId);
             return;
         }
 
-        // START EXECUTION LOG
         var logEntry = taskExecutionLogService.startLog(task);
 
         try {
 
             log.info("Processing task {}", taskId);
 
-            task.setStatus("PROCESSING");
-            taskRepository.save(task);
-
             TaskProcessor processor = taskProcessorFactory.getProcessor(task.getTaskType());
 
-            processor.process(task);
+            // processor.process(task);
 
-            task.setStatus("COMPLETED");
-            task.setProcessedAt(LocalDateTime.now());
-            taskRepository.save(task);
+            throw new RuntimeException("Force failure for testing");
+            
+            // task.setStatus(TaskStatus.COMPLETED);
+            // task.setProcessedAt(LocalDateTime.now());
+            // taskRepository.save(task);
 
-            // SUCCESS LOG
-            taskExecutionLogService.success(logEntry);
+            // taskExecutionLogService.success(logEntry);
 
-            log.info("Task completed {}", taskId);
+            // log.info("Task completed {}", taskId);
 
         } catch (Exception e) {
 
             log.error("Task processing failed {}", taskId);
 
-            // FAILURE LOG
             taskExecutionLogService.failure(logEntry, e.getMessage());
 
-            task.setRetryCount(task.getRetryCount() + 1);
+            int retryCount = task.getRetryCount() + 1;
+            task.setRetryCount(retryCount);
 
-            if (task.getRetryCount() >= 3) {
-                task.setStatus("FAILED");
+            if (retryCount >= 3) {
+                task.setStatus(TaskStatus.FAILED);
                 taskRepository.save(task);
+
                 log.error("Task moved to FAILED state {}", taskId);
-                return;
+                throw new RuntimeException("Send to DLQ");
+            } else {
+                task.setStatus(TaskStatus.PENDING); // or RETRYING if enum exists
+                taskRepository.save(task);
+
+                log.warn("Retrying task {} attempt {} of 3", taskId, retryCount);
+                rabbitTemplate.convertAndSend("task_retry_queue", taskId);
             }
-
-            taskRepository.save(task);
-
-            throw new RuntimeException("Retry task", e);
         }
     }
 }

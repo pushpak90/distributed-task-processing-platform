@@ -9,33 +9,48 @@ import org.springframework.stereotype.Service;
 
 import com.pushpak.taskplatform.api.dto.CreateTaskRequest;
 import com.pushpak.taskplatform.api.enums.TaskStatus;
-import com.pushpak.taskplatform.api.messaging.TaskProducer;
+// import com.pushpak.taskplatform.api.messaging.TaskProducer;
 import com.pushpak.taskplatform.api.model.Task;
+import com.pushpak.taskplatform.api.model.TaskOutbox;
+import com.pushpak.taskplatform.api.repository.TaskOutboxRepository;
 import com.pushpak.taskplatform.api.repository.TaskRepository;
 import com.pushpak.taskplatform.api.service.TaskService;
 
+import jakarta.transaction.Transactional;
+
 @Service
-public class TaskServiceImpl implements TaskService{
+public class TaskServiceImpl implements TaskService {
 
     private final TaskRepository taskRepository;
-    private final TaskProducer taskProducer;
+    // private final TaskProducer taskProducer;
+    private final TaskOutboxRepository taskOutboxRepository;
 
-    public TaskServiceImpl(TaskRepository taskRepository, TaskProducer taskProducer){
+    public TaskServiceImpl(TaskRepository taskRepository, 
+            // TaskProducer taskProducer,
+            TaskOutboxRepository taskOutboxRepository) {
         this.taskRepository = taskRepository;
-        this.taskProducer = taskProducer;
+        // this.taskProducer = taskProducer;
+        this.taskOutboxRepository = taskOutboxRepository;
     }
 
+    @Transactional
     @Override
     public Task createtask(CreateTaskRequest request) {
         Task task = Task.builder()
-                    .taskType(request.getTaskType())
-                    .payload(request.getPayload())
-                    .status(TaskStatus.PENDING)
-                    .retryCount(0)
-                    .createAt(LocalDateTime.now())
-                    .build();
+                .taskType(request.getTaskType())
+                .payload(request.getPayload())
+                .status(TaskStatus.PENDING)
+                .retryCount(0)
+                .createAt(LocalDateTime.now())
+                .build();
         Task savedTask = taskRepository.save(task);
-        taskProducer.sendTask(savedTask.getId());
+        // taskProducer.sendTask(savedTask.getId());
+        TaskOutbox outbox = TaskOutbox.builder()
+                .taskId(savedTask.getId())
+                .status("PENDING")
+                .createdAt(LocalDateTime.now())
+                .build();
+        taskOutboxRepository.save(outbox);
         return savedTask;
     }
 
@@ -58,5 +73,5 @@ public class TaskServiceImpl implements TaskService{
     public Page<Task> getTasks(int page, int size) {
         return taskRepository.findAll(PageRequest.of(page, size));
     }
-    
+
 }
