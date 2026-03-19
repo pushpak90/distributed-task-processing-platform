@@ -13,4 +13,5 @@ public interface TaskService {
     List<Task> getAllTask();
     List<Task> findByStatus(String status);
     Page<Task> getTasks(int page, int size);
+    Page<Task> getTasks(String status, int page, int size);
 }

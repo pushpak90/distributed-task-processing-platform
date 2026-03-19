@@ -15,6 +15,7 @@ import com.pushpak.taskplatform.api.model.TaskOutbox;
 import com.pushpak.taskplatform.api.repository.TaskOutboxRepository;
 import com.pushpak.taskplatform.api.repository.TaskRepository;
 import com.pushpak.taskplatform.api.service.TaskService;
+import org.springframework.data.domain.Pageable;
 
 import jakarta.transaction.Transactional;
 
@@ -25,7 +26,7 @@ public class TaskServiceImpl implements TaskService {
     // private final TaskProducer taskProducer;
     private final TaskOutboxRepository taskOutboxRepository;
 
-    public TaskServiceImpl(TaskRepository taskRepository, 
+    public TaskServiceImpl(TaskRepository taskRepository,
             // TaskProducer taskProducer,
             TaskOutboxRepository taskOutboxRepository) {
         this.taskRepository = taskRepository;
@@ -66,7 +67,8 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public List<Task> findByStatus(String status) {
-        return taskRepository.findByStatus(status);
+        TaskStatus taskStatus = TaskStatus.valueOf(status.toUpperCase());
+        return taskRepository.findByStatus(taskStatus);
     }
 
     @Override
@@ -74,4 +76,16 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.findAll(PageRequest.of(page, size));
     }
 
+    public Page<Task> getTasks(String status, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        if (status != null) {
+            return taskRepository.findByStatus(
+                    TaskStatus.valueOf(status.toUpperCase()),
+                    pageable);
+        }
+
+        return taskRepository.findAll(pageable);
+    }
 }

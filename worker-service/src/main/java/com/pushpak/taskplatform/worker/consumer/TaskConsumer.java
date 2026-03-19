@@ -88,7 +88,7 @@ public class TaskConsumer {
                 taskRepository.save(task);
 
                 log.warn("Retrying task {} attempt {} of 3", taskId, retryCount);
-                rabbitTemplate.convertAndSend("task_retry_queue", taskId);
+                rabbitTemplate.convertAndSend("task_retry_queue", taskId    );
             }
         }
     }
