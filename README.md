@@ -8,7 +8,7 @@ This project demonstrates **asynchronous processing, fault tolerance, scalabilit
 ---
 
 ## 🏗️ System Architecture
-
+![Architecture Diagram](./docs/architecture.png)
 ### 🔹 API Service
 - Accepts client task requests
 - Persists tasks in MySQL
