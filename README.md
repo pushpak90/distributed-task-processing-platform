@@ -1,30 +1,33 @@
-# Distributed Task Processing Platform
+
+# 🚀 Distributed Task Processing Platform
 
 ## 📌 Overview
-This project is a distributed task processing system built using **Spring Boot**, **RabbitMQ**, and **MySQL**.  
-It demonstrates asynchronous processing, fault tolerance, and scalable architecture.
+A **production-grade distributed task processing system** built using **Spring Boot, RabbitMQ, and MySQL**.  
+This project demonstrates **asynchronous processing, fault tolerance, scalability, and reliable messaging** using modern microservices architecture.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
-- **API Service**
-  - Accepts task requests
-  - Stores tasks in DB
-  - Uses Outbox pattern to publish events
+### 🔹 API Service
+- Accepts client task requests
+- Persists tasks in MySQL
+- Implements **Outbox Pattern** for reliable event publishing
 
-- **Worker Service**
-  - Consumes tasks from RabbitMQ
-  - Processes tasks asynchronously
-  - Handles retries, failures, and logging
+### 🔹 Worker Service
+- Consumes messages from RabbitMQ
+- Processes tasks asynchronously
+- Handles retries, failures, and logging
 
-- **RabbitMQ**
-  - Message broker for async communication
-  - Supports retry queue and dead letter queue (DLQ)
+### 🔹 Message Broker (RabbitMQ)
+- Enables async communication between services
+- Supports:
+  - Retry Queues
+  - Dead Letter Queue (DLQ)
 
 ---
 
-## 🔄 Flow
+## 🔄 System Flow
 
 ```
 Client → API → DB → Outbox → RabbitMQ → Worker → DB
@@ -39,86 +42,68 @@ Client → API → DB → Outbox → RabbitMQ → Worker → DB
 ## ⚙️ Features
 
 ### ✅ Core Features
-- Asynchronous task processing using RabbitMQ
-- Outbox pattern for reliable message publishing
-- Separate API and Worker services
+- Asynchronous task execution using RabbitMQ
+- Microservices-based architecture
+- Reliable event publishing using Outbox Pattern
 
-### 🔁 Reliability
-- Retry mechanism with retry count
-- Delayed retry using TTL queue
+### 🔁 Reliability & Fault Tolerance
+- Retry mechanism with configurable retry count
+- Delayed retries using TTL queues
 - Dead Letter Queue (DLQ) for failed tasks
-- Idempotent processing using DB locking
+- Idempotent processing using database locking
 
-### 🌐 API Features
-- Create task API
-- Get task by ID
+### 🌐 API Capabilities
+- Create and manage tasks
+- Fetch task by ID
 - Pagination support
-- Filter by status
+- Filter tasks by status
 
 ### 🛡️ Error Handling
 - Global exception handling
-- Validation support
-- Clean error responses
+- Input validation
+- Structured error responses
 
 ---
 
 ## 🧪 API Endpoints
 
-### Create Task
-```
-POST /tasks
-```
-
-### Get Task by ID
-```
-GET /tasks/{id}
-```
-
-### Get All Tasks
-```
-GET /tasks
-```
-
-### Pagination
-```
-GET /tasks/paged?page=0&size=10
-```
-
-### Filter by Status
-```
-GET /tasks/status/FAILED
-```
-
-### Filter + Pagination
-```
-GET /tasks/status/paged?status=FAILED&page=0&size=10
-```
+| Feature | Endpoint |
+|--------|---------|
+| Create Task | `POST /tasks` |
+| Get Task by ID | `GET /tasks/{id}` |
+| Get All Tasks | `GET /tasks` |
+| Pagination | `GET /tasks/paged?page=0&size=10` |
+| Filter by Status | `GET /tasks/status/{status}` |
+| Filter + Pagination | `GET /tasks/status/paged?status=FAILED&page=0&size=10` |
 
 ---
 
 ## 🧰 Tech Stack
 
-- Java 21
-- Spring Boot
-- Spring Data JPA
-- RabbitMQ
-- MySQL
-- Gradle
+- **Language:** Java 21  
+- **Backend:** Spring Boot  
+- **Database:** MySQL  
+- **Messaging:** RabbitMQ  
+- **ORM:** Spring Data JPA  
+- **Build Tool:** Gradle  
 
 ---
 
-## 🚀 How to Run
+## 🚀 Getting Started
 
-### 1. Start Dependencies
+### 🔹 Prerequisites
+- Java 21+
 - MySQL
 - RabbitMQ
 
-### 2. Run Services
+### 🔹 Run the Application
 
 ```bash
+# Start API Service
 cd api-service
 ./gradlew bootRun
 
+# Start Worker Service
 cd worker-service
 ./gradlew bootRun
 ```
@@ -127,26 +112,35 @@ cd worker-service
 
 ## 📊 Key Concepts Demonstrated
 
-- Distributed system design
-- Event-driven architecture
-- Retry & failure handling
+- Distributed Systems Design
+- Event-Driven Architecture
+- Outbox Pattern
+- Retry Mechanisms & Failure Handling
 - Dead Letter Queue (DLQ)
-- Idempotency
-- Pagination & filtering
-- Exception handling
+- Idempotent Processing
+- Pagination & Filtering
+- Exception Handling
 
 ---
 
-## 💡 Future Improvements (Optional)
+## 🔮 Future Enhancements
 
-- Docker setup
-- API Gateway
-- JWT Authentication
-- Monitoring (Prometheus/Grafana)
-- Flyway migrations
+- Docker & Containerization
+- API Gateway Integration
+- JWT Authentication & Security
+- Monitoring (Prometheus, Grafana)
+- Database Migration (Flyway)
 
 ---
-<!--
+
+## ⭐ Why This Project Matters
+
+This project simulates **real-world backend system design**, showcasing:
+- Scalability through asynchronous processing
+- Reliability using messaging patterns
+- Clean microservices architecture
+
+---
+
 ## 👨‍💻 Author
-Pushpak A. Fasate
--->
+**Pushpak A. Fasate**
