@@ -2,27 +2,31 @@
 # 🚀 Distributed Task Processing Platform
 
 ## 📌 Overview
-A **production-grade distributed task processing system** built using **Spring Boot, RabbitMQ, and MySQL**.  
-This project demonstrates **asynchronous processing, fault tolerance, scalability, and reliable messaging** using modern microservices architecture.
+A **production-grade distributed task processing system** built using **Spring Boot, RabbitMQ, and MySQL**.
+
+This project showcases **event-driven microservices architecture**, focusing on **asynchronous processing, fault tolerance, scalability, and reliable message delivery** using industry-standard design patterns.
 
 ---
 
 ## 🏗️ System Architecture
+
 ![Architecture Diagram](./docs/architecture.png)
+
 ### 🔹 API Service
-- Accepts client task requests
+- Handles client task submissions
 - Persists tasks in MySQL
 - Implements **Outbox Pattern** for reliable event publishing
 
 ### 🔹 Worker Service
 - Consumes messages from RabbitMQ
-- Processes tasks asynchronously
+- Executes tasks asynchronously
 - Handles retries, failures, and logging
 
-### 🔹 Message Broker (RabbitMQ)
-- Enables async communication between services
+### 🔹 RabbitMQ (Message Broker)
+- Decouples services via asynchronous messaging
 - Supports:
-  - Retry Queues
+  - Task Queue
+  - Retry Queue (TTL-based delay)
   - Dead Letter Queue (DLQ)
 
 ---
@@ -42,26 +46,49 @@ Client → API → DB → Outbox → RabbitMQ → Worker → DB
 ## ⚙️ Features
 
 ### ✅ Core Features
-- Asynchronous task execution using RabbitMQ
+- Asynchronous task processing using RabbitMQ
 - Microservices-based architecture
-- Reliable event publishing using Outbox Pattern
+- Reliable event publishing via Outbox Pattern
 
 ### 🔁 Reliability & Fault Tolerance
-- Retry mechanism with configurable retry count
+- Configurable retry mechanism
 - Delayed retries using TTL queues
-- Dead Letter Queue (DLQ) for failed tasks
-- Idempotent processing using database locking
+- Dead Letter Queue (DLQ) for failed processing
+- Idempotent processing using DB-level safeguards
 
 ### 🌐 API Capabilities
 - Create and manage tasks
-- Fetch task by ID
+- Retrieve task by ID
 - Pagination support
 - Filter tasks by status
 
 ### 🛡️ Error Handling
-- Global exception handling
-- Input validation
-- Structured error responses
+- Centralized exception handling
+- Request validation
+- Structured API error responses
+
+---
+
+## 📌 Sample API Request
+
+### Create Task
+`POST /tasks`
+
+#### Request
+```json
+{
+  "title": "Process Order",
+  "description": "Order ID 123"
+}
+```
+
+#### Response
+```json
+{
+  "id": 1,
+  "status": "PENDING"
+}
+```
 
 ---
 
@@ -75,6 +102,44 @@ Client → API → DB → Outbox → RabbitMQ → Worker → DB
 | Pagination | `GET /tasks/paged?page=0&size=10` |
 | Filter by Status | `GET /tasks/status/{status}` |
 | Filter + Pagination | `GET /tasks/status/paged?status=FAILED&page=0&size=10` |
+
+---
+
+## 🔄 Task Lifecycle
+
+```
+PENDING → PROCESSING → COMPLETED
+                 ↓
+              FAILED → RETRY → DLQ
+```
+
+---
+
+## 📁 Project Structure
+
+```
+api-service/
+  └── Handles task submission and persistence
+
+worker-service/
+  └── Processes tasks asynchronously
+
+docs/
+  └── Contains architecture diagrams
+
+postman/
+  └── API collections (optional)
+```
+
+---
+
+## 🧠 Design Decisions
+
+- Used **RabbitMQ** for decoupled asynchronous communication
+- Implemented **Outbox Pattern** to ensure consistency between DB and messaging
+- Used **DLQ** for handling failed messages safely
+- Applied **idempotency** to prevent duplicate processing
+- Designed system for **horizontal scalability**
 
 ---
 
@@ -115,7 +180,7 @@ cd worker-service
 - Distributed Systems Design
 - Event-Driven Architecture
 - Outbox Pattern
-- Retry Mechanisms & Failure Handling
+- Retry & Failure Handling
 - Dead Letter Queue (DLQ)
 - Idempotent Processing
 - Pagination & Filtering
@@ -135,10 +200,12 @@ cd worker-service
 
 ## ⭐ Why This Project Matters
 
-This project simulates **real-world backend system design**, showcasing:
-- Scalability through asynchronous processing
-- Reliability using messaging patterns
-- Clean microservices architecture
+This project reflects **real-world backend engineering practices**:
+
+- Handles **high-scale asynchronous workloads**
+- Ensures **data consistency & reliability**
+- Demonstrates **microservices communication patterns**
+- Designed with **production-grade architecture principles**
 
 ---
 
